@@ -28,30 +28,86 @@
 
   // getting the URL (you may want to use for Exercise 3)
   var url = window.location.href;
+  var device1 = new paper.Path();
+  var device2 = new paper.Path();
 
   // var socket = new WebSocket(
   //     'ws://your url here:8765/');
-  var path = new paper.Path();
 
-  // Only execute onMouseDrag when the mouse
-  // has moved at least 10 points:
-  // tool.minDistance = 10;
 
   // create a new websocket connecting to the server
   var socket = new WebSocket('ws://p4-eranda-b-erandabregasi640387.codeanyapp.com:8765/');
+  var dict = []; // create an empty array
 
+  function check(key) {
+    for (i = 0; i < dict.length; i++) {
+      if (dict[i].key == key) {
+        return dict[i];
+      }
+    }
+    return false;
+  }
   // triggered when receiving a message from the server
   socket.onmessage = function(receivedMessage) {
     // do something when you receive a message
-    console.log(receivedMessage.data); // data is part of the object
-    path.add(new paper.Point(receivedMessage.data));
-    path.strokeColor = "black";
-  };
+    var color = JSON.parse(receivedMessage.data);
+
+    // Exercise 1B
+    //     if (check(color.user) != false) {
+    //       check(color.user).value.add(new paper.Point(color.x, color.y));
+    //       check(color.user).value.strokeColor = {
+    //         hue: color.user,
+    //         saturation: 1,
+    //         brightness: 1
+    //       }
+    //     } else {
+    //       var path = new paper.Path();
+    //       dict.push({
+    //         key: color.user,
+    //         value: path
+    //       });
+    //       path.add(new paper.Point(color.x, color.y));
+    //       path.strokeColor = {
+    //         hue: color.user,
+    //         saturation: 1,
+    //         brightness: 1
+    //       }
+    //     }
+
+    // Exercise 1C
+    if (url.endsWith("?size=large")) {
+      
+
+    } else if (url.endsWith("?size=small")) {
+      var path = new paper.Path();
+      path.add(new paper.Point(color.x, color.y));
+      path.strokeColor = color.user;
+    }
+
+      
+    };
+
+  // data is part of the object
+  //     path.add(new paper.Point(color.x, color.y));
+
+  //     path.strokeColor = {
+  //       hue: color.user,
+  //       saturation: 1,
+  //       brightness: 1
+  //     }
+
+  var clientID = Math.random() * 100;
 
   tool.onMouseMove = function(event) {
     // Create a new path every time the mouse is clicked
-    socket.send("" + event.point.x + ", " + event.point.y);
+    socket.send(JSON.stringify({
+      x: event.point.x,
+      y: event.point.y,
+      user: clientID
+    }));
   }
+
+
 
   // notify console if socket closes unexpectedly
   socket.onclose = function(e) {
