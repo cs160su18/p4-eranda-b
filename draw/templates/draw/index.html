@@ -10,6 +10,7 @@
   <link rel="stylesheet" type="text/css" href="{% static 'draw/vendor/bootstrap/css/bootstrap.min.css' %}">
   <script type="text/javascript" src="{% static 'draw/vendor/jquery/jquery-3.3.1.min.js' %}"></script>
   <script type="text/javascript" src="{% static 'draw/vendor/paper/paper-full.min.js' %}"></script>
+  <script type="text/javascript" src="https://cdn.rawgit.com/alexgibson/shake.js/master/shake.js"></script>
 
   <style type="text/css">
   </style>
@@ -18,7 +19,7 @@
 
 <body>
   <!-- You may change the dimensions of this canvas -->
-  <canvas id="myCanvas" width="750px" height="750px"></canvas>
+  <canvas id="myCanvas" width="1000px" height="1000px"></canvas>
 </body>
 <script>
   // setting up the canvas and one paper tool
@@ -38,6 +39,7 @@
   // create a new websocket connecting to the server
   var socket = new WebSocket('ws://p4-eranda-b-erandabregasi640387.codeanyapp.com:8765/');
   var dict = []; // create an empty array
+  var path = new paper.Path();
 
   function check(key) {
     for (i = 0; i < dict.length; i++) {
@@ -47,45 +49,68 @@
     }
     return false;
   }
+
+  var path = new paper.Path();
+  var path2 = new paper.Path();
+  var path3 = new paper.Path();
+
+
   // triggered when receiving a message from the server
   socket.onmessage = function(receivedMessage) {
     // do something when you receive a message
     var color = JSON.parse(receivedMessage.data);
 
     // Exercise 1B
-    //     if (check(color.user) != false) {
-    //       check(color.user).value.add(new paper.Point(color.x, color.y));
-    //       check(color.user).value.strokeColor = {
-    //         hue: color.user,
-    //         saturation: 1,
-    //         brightness: 1
-    //       }
-    //     } else {
-    //       var path = new paper.Path();
-    //       dict.push({
-    //         key: color.user,
-    //         value: path
-    //       });
-    //       path.add(new paper.Point(color.x, color.y));
-    //       path.strokeColor = {
-    //         hue: color.user,
-    //         saturation: 1,
-    //         brightness: 1
-    //       }
-    //     }
-
+//         if (check(color.user) != false) {
+//           check(color.user).value.add(new paper.Point(color.x, color.y));
+//           check(color.user).value.strokeColor = {
+//             hue: color.user,
+//             saturation: 1,
+//             brightness: 1
+//           }
+//         } else {
+//           var path = new paper.Path();
+//           dict.push({
+//             key: color.user,
+//             value: path
+//           });
+//           path.add(new paper.Point(color.x, color.y));
+//           path.strokeColor = {
+//             hue: color.user,
+//             saturation: 1,
+//             brightness: 1
+//           }
+//         }
+    
     // Exercise 1C
-    if (url.endsWith("?size=large")) {
-      
 
-    } else if (url.endsWith("?size=small")) {
-      var path = new paper.Path();
-      path.add(new paper.Point(color.x, color.y));
-      path.strokeColor = color.user;
+    if (url.endsWith("?size=large")) {
+      if (check(color.user) != false) {
+
+        check(color.user).value.add(new paper.Point(color.x, color.y));
+        check(color.user).value.strokeColor = {
+          hue: color.user,
+          saturation: 1,
+          brightness: 1
+        }
+
+      } else {
+        var path = new paper.Path();
+        dict.push({
+          key: color.user,
+          value: path
+        });
+        path.add(new paper.Point(color.x, color.y));
+        path.strokeColor = {
+          hue: color.user,
+          saturation: 1,
+          brightness: 1
+        }
+
+      }
     }
 
-      
-    };
+  };
 
   // data is part of the object
   //     path.add(new paper.Point(color.x, color.y));
@@ -96,19 +121,76 @@
   //       brightness: 1
   //     }
 
-  var clientID = Math.random() * 100;
+
+
+  var clientID = Math.random() * 360;
 
   tool.onMouseMove = function(event) {
     // Create a new path every time the mouse is clicked
-    socket.send(JSON.stringify({
-      x: event.point.x,
-      y: event.point.y,
-      user: clientID
-    }));
+
+    // Exercise 1A-1C
+
+    if (url.endsWith("?size=small")) { 
+
+      if (check(clientID) != false) {
+
+        check(clientID).value.add(new paper.Point(event.point));
+        check(clientID).value.strokeColor = {
+          hue: clientID,
+          saturation: 1,
+          brightness: 1
+        }
+
+      } else {
+        var path = new paper.Path();
+        dict.push({
+          key: clientID,
+          value: path
+        });
+
+        path.add(new paper.Point(event.point));
+        path.strokeColor = {
+          hue: clientID,
+          saturation: 1,
+          brightness: 1
+        }
+
+      }
+      socket.send(JSON.stringify({
+        x: event.point.x,
+        y: event.point.y,
+        user: clientID
+      }));
+
+    }
+
   }
+  
+  // shake tutorial http://qnimate.com/detect-shake-using-javascript/ and https://alexgibson.github.io/shake.js/
+    var myShakeEvent = new Shake({
+        threshold: 15
+    });
 
+    // start listening to device motion
+    myShakeEvent.start();
 
+    // register a shake event
+    window.addEventListener('shake', shakeEventDidOccur, false);
 
+    //shake event callback
+    function shakeEventDidOccur () {
+        const context = canvas.getContext('2d');
+        context.clearRect(0, 0, canvas.width, canvas.height);
+    }
+  
+  function handleOrientation(event) {
+    if (event.gamma > 20) {
+      clientID = clientID + 50;
+    }
+  }
+  
+  window.addEventListener('deviceorientation', handleOrientation);
+  
   // notify console if socket closes unexpectedly
   socket.onclose = function(e) {
     console.error('Chat socket closed unexpectedly');
